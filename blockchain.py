@@ -4,6 +4,17 @@ from hashlib import sha256
 from typing import Any
 
 
+class ChainException(Exception):
+    """
+    ChainException
+
+    Class that warns an invalid Chain
+    """
+
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+
 class Block:
     """Block Class
 
@@ -75,6 +86,11 @@ class Block:
             self.nonce += 1
             self.update_hash()
 
+        # Sometimes when the loop finishes, if the hash is recauculates differs from the actual hash ??????
+        if self.hash != self.calculate_hash():
+            self.update_hash()
+            self.mine_block(difficult)
+
     def __repr__(self) -> str:
         return json.dumps(self.__dict__, indent=4)
 
@@ -109,6 +125,9 @@ class BlockChain:
         Args:
             new_block (Block): The Block to be added in the chain
         """
+        if not self.isChainValid():
+            print(self)
+            raise ChainException("Invalid BlockChain!")
         new_block.previous_hash = self[-1].hash
         new_block.mine_block(self.difficult)
         self.chain.append(new_block)
