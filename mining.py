@@ -3,18 +3,30 @@ import logging
 import random
 import time
 from datetime import datetime
-from timeit import repeat, timeit
+from timeit import timeit
 
 from blockchain import Block, BlockChain
 
-
 parser = argparse.ArgumentParser(description="BlockChain")
 
-parser.add_argument("-f", "--filename", type=str, default=None, help="Filename to display the log. (default stdout)")
+parser.add_argument(
+    "-f",
+    "--filename",
+    type=str,
+    default=None,
+    help="Filename to display the log. (Default = stdout)",
+)
 
-parser.add_argument("-s", "--show", action="store_true",help="Output the final chain in the log")
+parser.add_argument(
+    "-t",
+    "--time",
+    type=float,
+    default=300.0,
+    help="Maximum time to wait to mine a block in seconds. (Default = 300)",
+)
 
 _args = parser.parse_args()
+
 
 def get_random_date() -> str:
     return datetime.fromtimestamp(random.uniform(0, time.time())).strftime(
@@ -34,34 +46,36 @@ BLOCKS: list[Block] = [
 ]
 
 
-def test_BlockChain(difficult: int = 2) -> str:
+def test_BlockChain(difficult: int = 2) -> None:
     chain = BlockChain(difficult)
     for block in BLOCKS:
         chain.addBlock(block)
-    return str(chain)
+
 
 if __name__ == "__main__":
-    stmt = """
-for i in range(1,6):
-    test_BlockChain(i)
-    """
+    if _args.filename is not None:
+        with open(_args.filename, mode="w"):
+            pass
 
     logging.basicConfig(
-    level=logging.INFO,
-    filename=_args.filename,
-    filemode="w",
-    format="%(asctime)s - %(message)s\n",
-    datefmt="%d/%m/%Y %H:%M:%S",
-)
+        level=logging.INFO,
+        filename=_args.filename,
+        filemode="a+",
+        format="%(asctime)s - %(message)s\n",
+        datefmt="%d/%m/%Y %H:%M:%S",
+    )
 
-    for i in range(1,3):
-
-    # results = repeat(stmt=stmt, number=100, repeat=5, globals=globals())
-    # print(results)
-
-
-# logging.debug("debug")
-# logging.info("info")
-# logging.warning("warning")
-# logging.error("error")
-# logging.critical("critical")
+    i = 1
+    result = 0
+    max_time = _args.time
+    while result < max_time:
+        result = timeit(
+            stmt=f"test_BlockChain({i})",
+            number=1,
+            globals=globals(),
+        )
+        log = f"Difficulty: {i}\n"
+        log += f"Mean(Insert an block)  (s): {result / 10}"
+        log += f"\nMean(Insert 10 blocks) (s): {result}"
+        logging.info(log)
+        i += 1
